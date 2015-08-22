@@ -2,24 +2,13 @@
 namespace Module\HTMLCompress;
 
 /**
- * Hooks into the preprocess and postprocess hooks to buffer and compress HTML
+ * Compress the HTML from sleepy_render
  *
  * @return void
  * @internal
  */
-function preprocess() {
-	ob_start('\Module\HTMLCompress\process_data_jmr1');
-
-	ini_set("pcre.recursion_limit", "16777");
-}
-
-/**
- * Flushes all compressed data
- * @return void
- * @internal
- */
-function postprocess() {
-	ob_end_flush();
+function compress($page) {
+	return process_data_jmr1($page);
 }
 
 /**
@@ -49,11 +38,10 @@ function process_data_jmr1($text) {
 		)  # If we made it here, we are not in a blacklist tag.
 		%Six';
 	$text = preg_replace($re, " ", $text);
-	if ($text === null) exit("PCRE Error! File too big.\n");
+	if ($text === null) throw \Exception("PCRE Error! File too big.\n");
 	return $text;
 }
 
-if (ENV === "LIVE") {
-	\Sleepy\Hook::doAction('sleepy_preprocess',  '\Module\HTMLCompress\preprocess' );
-	\Sleepy\Hook::doAction('sleepy_postprocess', '\Module\HTMLCompress\postprocess');
+if (\Sleepy\SM::isLive()) {
+	\Sleepy\Hook::applyFilter('sleepy_render', '\Module\HTMLCompress\compress');
 }
